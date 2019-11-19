@@ -728,17 +728,14 @@ static int check_purpose_timestamp_sign(const X509_PURPOSE *xp, const X509 *x,
 
     /*
      * Check the optional key usage field:
-     * if Key Usage is present, it must be one of digitalSignature
-     * and/or nonRepudiation (other values are not consistent and shall
-     * be rejected).
+     * if Key Usage is present, it must be contain one of digitalSignature
+     * and/or nonRepudiation.
      */
-    if ((x->ex_flags & EXFLAG_KUSAGE)
-        && ((x->ex_kusage & ~(KU_NON_REPUDIATION | KU_DIGITAL_SIGNATURE)) ||
-            !(x->ex_kusage & (KU_NON_REPUDIATION | KU_DIGITAL_SIGNATURE))))
+    if (ku_reject(x, KU_DIGITAL_SIGNATURE | KU_NON_REPUDIATION))
         return 0;
 
-    /* Only time stamp key usage is permitted and it's required. */
-    if (!(x->ex_flags & EXFLAG_XKUSAGE) || x->ex_xkusage != XKU_TIMESTAMP)
+    /* Time stamp key usage is required. */
+    if (xku_reject(XKU_TIMESTAMP))
         return 0;
 
     /* Extended Key Usage MUST be critical */
